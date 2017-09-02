@@ -35,3 +35,30 @@ TEST_CASE("Test thomasAlgorithm", "[ODESolver]"){
         REQUIRE(result[i]==Approx(expected[i]));
     }
 } 
+TEST_CASE("Test solveODE", "[ODESolver]"){
+    auto fn2=[](const auto& x){
+        return 1.5;
+    };
+    auto fn1=[](const auto& x){
+        return 5.0;
+    };
+    auto fn=[](const auto& x){
+        return 1.5;
+    };
+    double initCondLower=0;
+    double initCondUpper=1;
+    double xMin=0;
+    double xMax=1;
+    constexpr int N=100;
+    double dx=(xMax-xMin)/(double)(N+1);
+    auto result=odesolver::solveODE<N>(fn2, fn1, fn, xMin, xMax, initCondLower, initCondUpper);
+    auto expectedFunction=[&](const auto& x){
+        double c2=1.0/(exp(-1.0/3.0)-exp(-3.0));
+        double c1=-c2;
+        return c1*exp(-3.0*x)+c2*exp(-(1.0/3.0)*x);
+    };
+    for(int i=0; i<result.size();++i){
+        //std::cout<<result[i]<<", "<<expectedFunction(xMin+(i+1)*dx)<<std::endl;
+        REQUIRE(result[i]==Approx(expectedFunction(xMin+(i+1)*dx)).epsilon(.0001));
+    }
+} 
