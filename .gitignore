@@ -1,0 +1,9 @@
+.vscode
+*.o
+*.out
+build
+test
+build
+*.plist
+*.gcno
+*.gcda
