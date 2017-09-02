@@ -22,7 +22,7 @@ TEST_CASE("Test thomasAlgorithm", "[ODESolver]"){
     lower[0]=.4;
     lower[1]=.6;
     upper[0]=.9;
-    upper[1]=.2;
+    upper[1]=.2; 
     solution[0]=.3;
     solution[1]=-.5;
     solution[2]=.3;

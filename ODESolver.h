@@ -29,7 +29,7 @@ namespace odesolver {
         });
 
         solve=futilities::reduce(solve, [&](const auto& prev, const auto& curr, const auto& index){
-            if(index>0){
+            if(index>0){ 
                 return (curr-lower[index-1]*prev)/(main[index]-lower[index-1]*modUpper[index-1]);
             }
             else {
@@ -37,8 +37,6 @@ namespace odesolver {
             }
         });
         solve=futilities::reduce_reverse(solve, [&](const auto& prev, const auto& curr, const auto& index){
-            std::cout<<"index:"<<index<<std::endl;
-
             if(index>0){
                 return curr-modUpper[lastIndexUpper-index]*prev;
                 
