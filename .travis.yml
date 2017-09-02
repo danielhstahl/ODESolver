@@ -19,7 +19,7 @@ before_install:
   - eval "${MATRIX_EVAL}"
   - cd ..
   - git clone https://github.com/phillyfan1138/FunctionalUtilities
-  - cd cfdistutilities
+  - cd ODESolver
 script:
   - make
   - ./test
