@@ -42,8 +42,8 @@ namespace odesolver {
         return std::move(solve);
     }
     /**used if the coefficients of the function have different type than the output.  Less efficient since new arrays are created*/
-    template<typename lowerArray, typename mainArray, typename upperArray, typename solveArray, typename OptionalCallback>
-    auto thomasAlgorithm_diff(const lowerArray& lower, const mainArray& main, const upperArray& upper, const solveArray& solve, OptionalCallback&& cb){
+    template<typename lowerArray, typename mainArray, typename upperArray, typename solveArray>
+    auto thomasAlgorithm_diff(const lowerArray& lower, const mainArray& main, const upperArray& upper, const solveArray& solve){
         auto lastIndexUpper=upper.size();
         auto modUpper=futilities::reduce_copy(upper, [&](const auto& prev, const auto& curr, const auto& index){
             if(index>0){
@@ -53,6 +53,7 @@ namespace odesolver {
                 return curr/main[index];
             }
         });
+       
         auto modSolve=futilities::reduce_copy(solve, [&](const auto& prev, const auto& curr, const auto& index){
             if(index>0){ 
                 return (curr-lower[index-1]*prev)/(main[index]-lower[index-1]*modUpper[index-1]);
@@ -61,19 +62,13 @@ namespace odesolver {
                 return curr/main[index];
             }
         });
-        return futilities::reduce_reverse_copy(modSolve, [&](const auto& prev, const auto& curr, const auto& index){
+        return futilities::reduce_reverse(modSolve, [&](const auto& prev, const auto& curr, const auto& index){
             if(index>0){
-                return cb(curr-modUpper[lastIndexUpper-index]*prev);
+                return curr-modUpper[lastIndexUpper-index]*prev;
             }
             else{ 
-                return cb(curr);
+                return curr;
             }
-        });
-    }
-    template<typename lowerArray, typename mainArray, typename upperArray, typename solveArray>
-    auto thomasAlgorithm_diff(const lowerArray& lower, const mainArray& main, const upperArray& upper, const solveArray& solve){
-        return thomasAlgorithm_diff(lower, main, upper, solve, [](const auto& val){
-            return val;
         });
     }
 
@@ -98,6 +93,7 @@ namespace odesolver {
         };
         auto getUpperCoef=[&](const auto& index){
             auto x=getXAtIndex(index);
+            
             return fn2(x)/dxsq+fn1(x)/dx2;
         };
         auto getLowerCoef=[&](const auto& index){
@@ -118,11 +114,15 @@ namespace odesolver {
         auto lower=futilities::for_each_parallel(0, N-1, [&](const auto& index){
             return getLowerCoef(index+2);//starts two after the xMin...the one after xMin is the coefficient on the boundary
         });
+
+       
+
         auto solution=futilities::for_each_parallel(0, N, [&](const auto& index){
             if(index==0){
                 return -initialConditionLower*getLowerCoef(index+1);
             }
             else if(index==N-1){
+                
                 return -initialConditionUpper*getUpperCoef(index+1);
             }
             else{
@@ -132,7 +132,7 @@ namespace odesolver {
         return thomasAlgorithm(lower, main, upper, solution);
     }
     /**Solves ODEs of the form fn2(x)*f''(x)+fn1(x)*f'(x)+fn*f(x)=0*/
-    template<typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number, typename Index, typename OptionalCallback>
+    template<typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number, typename Index>
     auto solveODE_diff(
         const CoefSecondDeriv& fn2, 
         const CoefFirstDerivative& fn1, 
@@ -141,8 +141,7 @@ namespace odesolver {
         const Number& initialConditionUpper,
         const Number& xMin,
         const Number& xMax,
-        const Index& N,
-        OptionalCallback&& cb
+        const Index& N
     ){
         auto dx=(xMax-xMin)/(double)(N+1); //actual discrete steps are N+2 (N diaganonal+2 conditions)
         auto dxsq=dx*dx;
@@ -172,6 +171,15 @@ namespace odesolver {
         auto lower=futilities::for_each_parallel(0, N-1, [&](const auto& index){
             return getLowerCoef(index+2);//starts two after the xMin...the one after xMin is the coefficient on the boundary
         });
+        /*for(auto& val:main){
+            std::cout<<"main: "<<val<<std::endl;
+        }
+        for(auto& val:upper){
+            std::cout<<"upper: "<<val<<std::endl;
+        }
+        for(auto& val:lower){
+            std::cout<<"lower: "<<val<<std::endl;
+        }*/
         auto solution=futilities::for_each_parallel(0, N, [&](const auto& index){
             if(index==0){
                 return -initialConditionLower*getLowerCoef(index+1);
@@ -183,27 +191,12 @@ namespace odesolver {
                 return 0.0;
             }
         });
-        return thomasAlgorithm_diff(lower, main, upper, solution, cb);
+        /*for(auto& val:solution){
+            std::cout<<"solution: "<<val<<std::endl;
+        }*/
+        return thomasAlgorithm_diff(lower, main, upper, solution);
     }
-    template<typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number, typename Index>
-    auto solveODE_diff(
-        const CoefSecondDeriv& fn2, 
-        const CoefFirstDerivative& fn1, 
-        const CoefFunction& fn,
-        const Number& initialConditionLower,
-        const Number& initialConditionUpper,
-        const Number& xMin,
-        const Number& xMax,
-        const Index& N
-    ){
-        return solveODE_diff(
-            fn2, fn1, fn, initialConditionLower, 
-            initialConditionUpper,
-            xMin, xMax, N, [](const auto& val){
-                return val;
-            }
-        );
-    }
+    
 }
 
 
