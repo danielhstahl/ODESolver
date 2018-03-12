@@ -129,7 +129,7 @@ namespace odesolver {
                 return 0.0;
             }
         });
-        return thomasAlgorithm(lower, main, upper, solution);
+        return thomasAlgorithm(std::move(lower), std::move(main), std::move(upper), std::move(solution));
     }
     /**Solves ODEs of the form fn2(x)*f''(x)+fn1(x)*f'(x)+fn*f(x)=0*/
     template<typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number, typename Index>
@@ -171,15 +171,7 @@ namespace odesolver {
         auto lower=futilities::for_each_parallel(0, N-1, [&](const auto& index){
             return getLowerCoef(index+2);//starts two after the xMin...the one after xMin is the coefficient on the boundary
         });
-        /*for(auto& val:main){
-            std::cout<<"main: "<<val<<std::endl;
-        }
-        for(auto& val:upper){
-            std::cout<<"upper: "<<val<<std::endl;
-        }
-        for(auto& val:lower){
-            std::cout<<"lower: "<<val<<std::endl;
-        }*/
+
         auto solution=futilities::for_each_parallel(0, N, [&](const auto& index){
             if(index==0){
                 return -initialConditionLower*getLowerCoef(index+1);
@@ -191,9 +183,6 @@ namespace odesolver {
                 return 0.0;
             }
         });
-        /*for(auto& val:solution){
-            std::cout<<"solution: "<<val<<std::endl;
-        }*/
         return thomasAlgorithm_diff(lower, main, upper, solution);
     }
     
