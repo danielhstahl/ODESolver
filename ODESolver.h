@@ -11,8 +11,8 @@ namespace odesolver {
 
     
 
-    template<typename lowerArray, typename mainArray, typename upperArray, typename solveArray>
-    auto thomasAlgorithm(const lowerArray& lower,const mainArray& main, const upperArray& upper, solveArray&& solve){
+    template<typename lowerArray, typename mainArray, typename upperArray, typename solveArray, typename OptionalCB>
+    auto thomasAlgorithm(const lowerArray& lower,const mainArray& main, const upperArray& upper, solveArray&& solve, const OptionalCB& cb){
         auto lastIndexUpper=upper.size();
         auto modUpper=futilities::reduce_copy(upper, [&](const auto& prev, const auto& curr, const auto& index){
             if(index>0){
@@ -45,7 +45,7 @@ namespace odesolver {
 
 
     /**Solves ODEs of the form fn2(x)*f''(x)+fn1(x)*f'(x)+fn*f(x)=0*/
-    template<int N, typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number>
+    template<int N, typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number, typename OptionalAlterOutput>
     auto solveODE(
         const CoefSecondDeriv& fn2, 
         const CoefFirstDerivative& fn1, 
@@ -53,7 +53,8 @@ namespace odesolver {
         const Number& xMin,
         const Number& xMax,
         const Number& initialConditionLower,
-        const Number& initialConditionUpper
+        const Number& initialConditionUpper,
+        const OptionalAlterOutput& cb
     ){
         auto dx=(xMax-xMin)/(double)(N+1); //actual discrete steps are N+2 (N diaganonal+2 conditions)
         auto dxsq=dx*dx;
@@ -91,11 +92,26 @@ namespace odesolver {
                 return -initialConditionUpper*getUpperCoef(index+1);
             }
             else{
-                return 0.0;
+                return 0.0*main[index];//*main[index];//in case its not a double...
             }
         });
-        return thomasAlgorithm(lower, main, upper, solution);
+        return thomasAlgorithm(lower, main, upper, solution, cb);
     }
+}
+
+template<int N, typename CoefSecondDeriv, typename CoefFirstDerivative, typename CoefFunction, typename Number>
+auto solveODE(
+    const CoefSecondDeriv& fn2, 
+    const CoefFirstDerivative& fn1, 
+    const CoefFunction& fn,
+    const Number& xMin,
+    const Number& xMax,
+    const Number& initialConditionLower,
+    const Number& initialConditionUpper
+){
+    return solveODE(fn2, fn1, fn, xMin, xMax, initialConditionLower, initialConditionUpper, [](const auto& val){
+        return val;
+    });
 }
 
 
